@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
+import time
 
 """
 tokenizer = AutoTokenizer.from_pretrained(".")
@@ -12,10 +13,20 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 tokenizer = AutoTokenizer.from_pretrained("../deepseek-coder-1.3b-instruct")
 model = AutoModelForCausalLM.from_pretrained("../deepseek-coder-1.3b-instruct", torch_dtype=torch.bfloat16).cuda()
+#tokenizer = AutoTokenizer.from_pretrained("../deepseek-coder-7b-instruct-v1.5")
+#model = AutoModelForCausalLM.from_pretrained("../deepseek-coder-7b-instruct-v1.5").cuda()
+
 messages=[
-    { 'role': 'user', 'content': "If I have a SQL table called people with columns 'name, date, count' generate a SQL query to get all peoples names"}
+    { 'role': 'user', 'content': "If I have a SQL table called people with columns 'name, date, count' generate a SQL query to get all peoples names. Output only the SQL query no other text"}
 ]
+
+start_time = time.time()
 inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to(model.device)
 # tokenizer.eos_token_id is the id of <|EOT|> token
 outputs = model.generate(inputs, max_new_tokens=512, do_sample=False, top_k=50, top_p=0.95, num_return_sequences=1, eos_token_id=tokenizer.eos_token_id)
+end_time = time.time()
+
 print(tokenizer.decode(outputs[0][len(inputs[0]):], skip_special_tokens=True))
+
+print("Execution time:")
+print(end_time - start_time)
